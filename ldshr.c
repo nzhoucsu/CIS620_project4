@@ -8,7 +8,7 @@
   tmp = *ldp;\
 }
 
-#define MACHINE_NUM 3
+#define MACHINE_NUM 4
 // double tmp;
 struct para{
   char *srvname;
@@ -22,6 +22,7 @@ struct gpu_passing{
   int flag;
 };
 
+void check_input(int argc, char *argv[]);
 void *gpu(struct gpu_passing *p);
 
 static void *pthd_act(void *arg1){
@@ -43,23 +44,7 @@ main(argc, argv)
   int             argc;
   char           *argv[];
 {
-  // Check user input
-  if(argc!=3 && argc!=6){
-    printf("Wrong number for parameters!\n");
-    exit(0);
-  }
-  if(strcmp(argv[1], "-gpu") != 0 && strcmp(argv[1], "-lst") != 0 ){
-    printf("Wrong command!\n");
-    exit(0);
-  }
-  if(strcmp(argv[1], "-gpu")==0){
-    if(argc!=6)
-      printf("Wrong parameter input\n");
-  }
-  if(strcmp(argv[1], "-lst")==0){
-    if(argc!=3)
-      printf("Wrong parameter input\n");
-  }
+  check_input(argc, argv);
 
   // Define variables
   CLIENT         *cl[MACHINE_NUM];    /* a client handle */
@@ -67,7 +52,7 @@ main(argc, argv)
     "bach", 
     "chopin",
     //"davinci",
-    // "degas",
+    "degas",
     "arthur"
   };
   char *srvrun[2];
@@ -157,24 +142,40 @@ main(argc, argv)
     if(pthread_create(&p_id[0], NULL, gpu, (void *)&p1) !=0){
         printf("Create new thread failed! Program terminates!\n");
         exit(0);
-    } 
-    
+    }     
     if(pthread_create(&p_id[1], NULL, gpu, (void *)&p2) !=0){
         printf("Create new thread failed! Program terminates!\n");
         exit(0);
     } 
     pthread_join(p_id[0], NULL);
     pthread_join(p_id[1], NULL);
-    printf("%.3f, %.3f, %.3f\n", *(p1.dp), *(p2.dp), *(p1.dp)+*(p2.dp));
+    printf("%s returns %.3f, %s returns %.3f, sum is %.3f\n", srvrun[0], *(p1.dp), srvrun[1], *(p2.dp), *(p1.dp)+*(p2.dp));
   }  
 }
 
 
 void *gpu(struct gpu_passing *p){ 
-  printf("%d thread creates\n", p->flag);
   p->dp = sumqroot_gpu_1(p->p, p->cl);
 }
 
+void check_input(int argc, char *argv[]){
+  if(argc!=3 && argc!=6){
+    printf("Wrong number for parameters!\n");
+    exit(0);
+  }
+  if(strcmp(argv[1], "-gpu") != 0 && strcmp(argv[1], "-lst") != 0 ){
+    printf("Wrong command!\n");
+    exit(0);
+  }
+  if(strcmp(argv[1], "-gpu")==0){
+    if(argc!=6)
+      printf("Wrong parameter input\n");
+  }
+  if(strcmp(argv[1], "-lst")==0){
+    if(argc!=3)
+      printf("Wrong parameter input\n");
+  }
+}
 
 
 
