@@ -3,7 +3,6 @@
 #include <rpc/rpc.h>
 #include "ldshr.h"
 
-FILE           *fp = NULL;
 static double *ldp = NULL;
 
 double reduction(int x, int y, int z);
@@ -15,7 +14,12 @@ getload_1_svc(char **srvname, struct svc_req *rqp){
   {
     ldp = (double *) malloc(sizeof(double*));
     ldp = &loadavg[0];
+    printf("%f\n", loadavg[0]);
     return ((double *)ldp);
+  }
+  else{
+  	printf("get load failed\n");
+  	return &(loadavg[0]);
   }
 }
 
