@@ -9,6 +9,7 @@
 }
 
 #define MACHINE_NUM 4
+CLIENT *cl[MACHINE_NUM];
 // double tmp;
 struct para{
   char *srvname;
@@ -19,11 +20,11 @@ struct gpu_passing{
   CLIENT *cl;
   struct gpu_struct *p;
   double *dp;
-  int flag;
 };
 
 void check_input(int argc, char *argv[]);
 void *gpu(struct gpu_passing *p);
+void run_gpu(char *arg[], char *srv1, char *srv2, CLIENT *cl1, CLIENT *cl2);
 
 static void *pthd_act(void *arg1){
   CLIENT *cl;
@@ -46,8 +47,7 @@ main(argc, argv)
 {
   check_input(argc, argv);
 
-  // Define variables
-  CLIENT         *cl[MACHINE_NUM];    /* a client handle */
+  CLIENT         *cl[MACHINE_NUM];
   char *srvname[] = {
     "bach", 
     "chopin",
@@ -119,44 +119,49 @@ main(argc, argv)
     }
   // Run gpt
   if(strcmp(argv[1], "-gpu")==0){
-    int N = atoi(argv[2]);
-    int mean = atoi(argv[3]);
-    int seed_1 = atoi(argv[4]);
-    int seed_2 = atoi(argv[5]);
-    struct gpu_struct g1, g2;
-    struct gpu_passing p1, p2;
-    g1.N = N-1;
-    g1.mean = mean;
-    g1.seed = seed_1;
-    p1.cl = cl[0];
-    p1.p = &g1;
-    p1.dp = (double *)malloc(sizeof(double*));
-    p1.flag = 1;
-    g2.N = N-1;
-    g2.mean = mean;
-    g2.seed = seed_2;
-    p2.cl = cl[1];
-    p2.p = &g2;
-    p2.dp = (double *)malloc(sizeof(double*));
-    p2.flag = 2;
-    if(pthread_create(&p_id[0], NULL, gpu, (void *)&p1) !=0){
-        printf("Create new thread failed! Program terminates!\n");
-        exit(0);
-    }     
-    if(pthread_create(&p_id[1], NULL, gpu, (void *)&p2) !=0){
-        printf("Create new thread failed! Program terminates!\n");
-        exit(0);
-    } 
-    pthread_join(p_id[0], NULL);
-    pthread_join(p_id[1], NULL);
-    printf("%s returns %.3f, %s returns %.3f, sum is %.3f\n", srvrun[0], *(p1.dp), srvrun[1], *(p2.dp), *(p1.dp)+*(p2.dp));
+    run_gpu(argv, srvrun[0], srvrun[1], cl[0], cl[1]);
   }  
+}
+
+
+void run_gpu(char *argv[], char *srv1, char *srv2, CLIENT *cl1, CLIENT *cl2){
+  int N = atoi(argv[2]);
+  int mean = atoi(argv[3]);
+  int seed_1 = atoi(argv[4]);
+  int seed_2 = atoi(argv[5]);
+  struct gpu_struct g1, g2;
+  struct gpu_passing p1, p2;
+  pthread_t p_id1, p_id2;
+  g1.N = N-1;
+  g1.mean = mean;
+  g1.seed = seed_1;
+  p1.cl = cl1;
+  p1.p = &g1;
+  p1.dp = (double *)malloc(sizeof(double*));
+  g2.N = N-1;
+  g2.mean = mean;
+  g2.seed = seed_2;
+  p2.cl = cl2;
+  p2.p = &g2;
+  p2.dp = (double *)malloc(sizeof(double*));
+  if(pthread_create(&p_id1, NULL, gpu, (void *)&p1) !=0){
+      printf("Create new thread failed! Program terminates!\n");
+      exit(0);
+  }     
+  if(pthread_create(&p_id2, NULL, gpu, (void *)&p2) !=0){
+      printf("Create new thread failed! Program terminates!\n");
+      exit(0);
+  } 
+  pthread_join(p_id1, NULL);
+  pthread_join(p_id2, NULL);
+  printf("%s returns %.3f, %s returns %.3f, sum is %.3f\n", srv1, *(p1.dp), srv2, *(p2.dp), *(p1.dp)+*(p2.dp));
 }
 
 
 void *gpu(struct gpu_passing *p){ 
   p->dp = sumqroot_gpu_1(p->p, p->cl);
 }
+
 
 void check_input(int argc, char *argv[]){
   if(argc!=3 && argc!=6){
