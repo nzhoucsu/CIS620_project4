@@ -5,12 +5,12 @@
 #include "ldshr.h"
 #include <pthread.h>
 
-#define MACHINE_NUM 4
+#define MACHINE_NUM 5
 CLIENT *cl[MACHINE_NUM];
 int min_idx[2];
 char *srvname[] = {
   "bach", 
-  //"davinci",
+  "davinci",
   "degas",
   "arthur",
   "chopin"
@@ -137,7 +137,7 @@ void run_lst(char *argv[], int idx1, int idx2){
 	  		tmp = tmp->next;
 	  	}
 	  	printf("\n%s returns %.3f.\n", srvname[idx2], p2.dp); 	
-	  	printf("Sum is %.3f\n\n", p1.dp + p2.dp);
+	  	printf("\nSum is %.3f\n\n", p1.dp + p2.dp);
 	}
 }
 
@@ -246,29 +246,24 @@ void check_load(){
     pthread_join(p_id[i], NULL);
   }
   // Pick out two servers with minimum workload.
-  tmp = load_para[0].load;
   min_idx[0] = 0;
   for (i=1; i<MACHINE_NUM; i++){
-    if(load_para[i].load < tmp){
-      tmp = load_para[i].load;
+    if(load_para[i].load < load_para[min_idx[0]].load){
       min_idx[0] = i;
     }
   }
   if(min_idx[0] == 0){
-    tmp = load_para[1].load;
     min_idx[1] = 1;
   }
   else{
-    tmp = load_para[0].load;
     min_idx[1] = 0;
   }
   for (i=0; i<MACHINE_NUM; i++){
     if(i == min_idx[0]){
       continue;
     }
-    if(load_para[i].load < tmp){
-      tmp = load_para[i].load;
-      min_idx[i] = i;
+    if(load_para[i].load < load_para[min_idx[1]].load){
+      min_idx[1] = i;
     }
   }  
   // Print results.
@@ -278,7 +273,7 @@ void check_load(){
     printf("%s %.3f\t", srvname[i], load_para[i].load);
   }
   printf("\n");
-  printf("Execute on %s and %s\n", srvname[min_idx[0]], srvname[min_idx[1]]);
+  printf("Execute on %s and %s\n\n", srvname[min_idx[0]], srvname[min_idx[1]]);
 }
 
 
@@ -319,7 +314,7 @@ void run_gpu(char *argv[], int idx1, int idx2){
   } 
   pthread_join(p_id1, NULL);
   pthread_join(p_id2, NULL);
-  printf("%s returns %.3f, %s returns %.3f, sum is %.3f\n", srvname[idx1], *(p1.dp), srvname[idx2], *(p2.dp), *(p1.dp)+*(p2.dp));
+  printf("%s returns %.3f, %s returns %.3f, sum is %.3f\n\n", srvname[idx1], *(p1.dp), srvname[idx2], *(p2.dp), *(p1.dp)+*(p2.dp));
 }
 
 
@@ -339,7 +334,7 @@ void write_file(char *filename){
        printf("Error! Write file");
        exit(0);
    }
-   printf("\nWrite to file\n");
+   printf("Write to file\n");  
    for(i=0; i<10; i++)
    {
       cell.num = (double)(rand() % 50);
