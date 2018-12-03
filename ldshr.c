@@ -47,7 +47,7 @@ void *lst(void *p);
 void run_gpu(char *arg[], int idx1, int idx2);
 void run_lst(char *arg[], int idx1, int idx2);
 void read_file(char *filename, struct node **l1, struct node **l2);
-// void write_file();
+void write_file(char *filename);
 
 
 main(argc, argv)
@@ -75,6 +75,7 @@ void run_lst(char *argv[], int idx1, int idx2){
 	struct lst_passing p1, p2;
 	pthread_t p_id1, p_id2;
 	// Contents
+	write_file(argv[2]);
 	read_file(argv[2], &list1, &list2);
 	if (list1==NULL && list2==NULL)
 	{
@@ -82,13 +83,6 @@ void run_lst(char *argv[], int idx1, int idx2){
 	}
 	else if (list1!=NULL && list2==NULL)
 	{
-		tmp = list1;
-		printf("\n%s linked list is ", srvname[idx1]);
-		while(tmp){
-			printf("%.3f\t", tmp->num);
-			tmp = tmp->next;
-		}
-		printf("\n");
 		p1.cl = cl[idx1];
 		p1.p = list1;
 		p1.dp = -1;
@@ -101,13 +95,6 @@ void run_lst(char *argv[], int idx1, int idx2){
 	}
 	else if (list1==NULL && list2!=NULL)
 	{
-		tmp = list2;
-		printf("\n%s linked list is ", srvname[idx1]);
-		while(tmp){
-			printf("%.3f\t", tmp->num);
-			tmp = tmp->next;
-		}
-		printf("\n");
 		p2.cl = cl[idx2];
 		p2.p = list2;
 		p2.dp = -1;
@@ -120,20 +107,6 @@ void run_lst(char *argv[], int idx1, int idx2){
 	}
 	else if (list1!=NULL && list2!=NULL)
 	{
-		tmp = list1;
-		printf("\n%s linked list is ", srvname[idx1]);
-		while(tmp){
-			printf("%.3f\t", tmp->num);
-			tmp = tmp->next;
-		}
-		printf("\n");
-		tmp = list2;
-		printf("\n%s linked list is ", srvname[idx2]);
-		while(tmp){
-			printf("%.3f\t", tmp->num);
-			tmp = tmp->next;
-		}
-		printf("\n");
 		p1.cl = cl[idx1];
 		p1.p = list1;
 		p1.dp = -1;
@@ -150,9 +123,21 @@ void run_lst(char *argv[], int idx1, int idx2){
 	  	}
 	  	pthread_join(p_id1, NULL); 
 	  	pthread_join(p_id2, NULL);
-	  	printf("%s returns %.3f. Sum is %.3f\n", srvname[idx1], p1.dp, p1.dp);
-	  	printf("%s returns %.3f. Sum is %.3f\n", srvname[idx2], p2.dp, p2.dp); 	
-	  	printf("Sum is %.3f\n", p1.dp + p2.dp);
+	  	printf("\nData sent to %s\n", srvname[idx1]);
+	  	tmp = list1;
+	  	while(tmp){
+	  		printf("%.3f, ", tmp->num);
+	  		tmp = tmp->next;
+	  	}
+	  	printf("\n%s returns %.3f.\n", srvname[idx1], p1.dp);
+	  	printf("\nData sent to %s\n", srvname[idx2]);
+	  	tmp = list2;
+	  	while(tmp){
+	  		printf("%.3f, ", tmp->num);
+	  		tmp = tmp->next;
+	  	}
+	  	printf("\n%s returns %.3f.\n", srvname[idx2], p2.dp); 	
+	  	printf("Sum is %.3f\n\n", p1.dp + p2.dp);
 	}
 }
 
@@ -163,7 +148,7 @@ void *lst(void *p){
 }
 
 
-void read_file(char *filename, struct node **l1, struct node **l2){
+void read_file(char *filename, struct node **l1, struct node **l2){	
 	struct node *l1_h = NULL;
 	struct node *l1_e = NULL;
 	struct node *l2_h = NULL;
@@ -287,6 +272,7 @@ void check_load(){
     }
   }  
   // Print results.
+  printf("\n");
   for (i=0; i<MACHINE_NUM; i++)
   {
     printf("%s %.3f\t", srvname[i], load_para[i].load);
@@ -342,22 +328,24 @@ void *gpu(struct gpu_passing *p){
 }
 
 
-// void write_file(){
-// 	struct file_data cell;
-// 	time_t t;
-// 	int i;
-// 	srand((unsigned) time(&t));
-// 	cell.c = ' ';
-// 	FILE *fptr;
-// 	if ((fptr = fopen("datafile","w")) == NULL){
-//        printf("Error! Write file");
-//        exit(0);
-//    }
-//    for(i=0; i<5; i++)
-//    {
-//       cell.num = double(rand() % 50);
-//       printf("%f\t", cell.num);
-//       fwrite(&cell, sizeof(struct file_data), 1, fptr); 
-//    }
-//    fclose(fptr); 
-// }
+void write_file(char *filename){
+	struct file_data cell;
+	time_t t;
+	int i;
+	srand((unsigned) time(&t));
+	cell.c = ' ';
+	FILE *fptr;
+	if ((fptr = fopen(filename,"w")) == NULL){
+       printf("Error! Write file");
+       exit(0);
+   }
+   printf("\nWrite to file\n");
+   for(i=0; i<10; i++)
+   {
+      cell.num = (double)(rand() % 50);
+      printf("%.3f, ", cell.num);
+      fwrite(&cell, sizeof(struct file_data), 1, fptr); 
+   }
+   printf("\n");
+   fclose(fptr); 
+}
